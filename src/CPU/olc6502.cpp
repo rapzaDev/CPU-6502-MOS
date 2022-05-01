@@ -42,8 +42,91 @@ void olc6502::write(uint16_t a, uint8_t d) {
 
 // Only will execute when the internal cycles variable is equal to zero.
 void olc6502::clock() {
-    if (this->cycles == 0) {
-        this->opcode = read(this->pc);
+    if (cycles == 0) {
+        opcode = read(pc);
         pc++;
+
+        // Get Starting number of cycles
+        cycles = lookup[opcode].cycles;
+        
+        uint8_t additional_cycle1 = (this->*lookup[opcode].addrmode)();
+        
+        uint8_t additional_cycle2 = (this->*lookup[opcode].operate)();
+
+        cycles += (additional_cycle1 & additional_cycle2);
     }
+
+    // Everytime the clock function is called the number of cycles is decremented
+    cycles--;
+
+}
+
+/**set the value of SR */
+void olc6502::setFlag(FLAGS6502 f, bool v) {
+    if (v) {
+        status |= f;
+    } else {
+        status &= ~f;
+    }
+}
+
+// ---------------------------------------- Addressing Modes // ----------------------------------------
+
+// <IMPLIED MODE>
+uint8_t olc6502::IMP() {
+    fetched = a;
+    return 0;
+}
+
+// <IMMEDIATE MODE> 
+//  THE DATA IS IN THE NEXT BYTE
+uint8_t olc6502::IMM() {
+    addr_abs = pc++;
+    return 0;
+}
+
+// <ZERO PAGE MODE>
+// THE DATA IS LOCATED SOMEWHERE IN PAGE 0.
+// The 6502 tend to have their working memory located around page zero.
+// Because this is a way of directly acessing those bytes with
+// instructions that require fewer bytes. Instructions consist of multiple bytes and each byte 
+// takes time to read, so in order to optimize the speed of the programm, it just can read in 
+// the low byte of the 0th Page.
+uint8_t olc6502::ZP0() {
+    addr_abs = read(pc);
+    pc++;
+    addr_abs &= 0X00FF; // Mask for page zero and the offset.
+    return 0;
+}
+
+// <ZERO PAGE WITH X REGISTER OFFSET>
+// This is useful for iterating through regions of memory.
+uint8_t olc6502::ZPX() {
+    addr_abs = (read(pc) + x);
+    pc++;
+    addr_abs &= 0X00FF; // Mask for page zero and the offset.
+    return 0;
+}
+
+// <ZERO PAGE WITH Y REGISTER OFFSET>
+// This is useful for iterating through regions of memory.
+uint8_t olc6502::ZPY() {
+    addr_abs = (read(pc) + y);
+    pc++;
+    addr_abs &= 0X00FF; // Mask for page zero and the offset.
+    return 0;
+}
+
+// <ABSOLUTE ADDRESS>
+// Is the absolute address suplied whit the instructions will have 3 bytes
+// consisted in the low byte and a high byte.
+uint8_t olc6502::ABS() {
+    uint16_t lo = read(pc);
+    pc++;
+    uint16_t hi = read(pc);
+    pc++;
+
+    addr_abs = (hi << 8) | lo;
+
+    return 0;
 }
