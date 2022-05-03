@@ -70,7 +70,7 @@ void olc6502::setFlag(FLAGS6502 f, bool v) {
     }
 }
 
-// ---------------------------------------- Addressing Modes // ----------------------------------------
+// ---------------------------------------- Addressing Modes ----------------------------------------
 
 // <IMPLIED MODE>
 uint8_t olc6502::IMP() {
@@ -118,8 +118,8 @@ uint8_t olc6502::ZPY() {
 }
 
 // <ABSOLUTE ADDRESS>
-// Is the absolute address suplied whit the instructions will have 3 bytes
-// consisted in the low byte and a high byte.
+// Is the absolute address suplied whit the instructions will have 3 byte
+// consisted in the low byte and a high byte fo the address.
 uint8_t olc6502::ABS() {
     uint16_t lo = read(pc);
     pc++;
@@ -127,6 +127,48 @@ uint8_t olc6502::ABS() {
     pc++;
 
     addr_abs = (hi << 8) | lo;
+
+    return 0;
+}
+
+// <ABSOLUTE ADDRESS WITH X REGISTER OFFSET>
+uint8_t olc6502::ABX() {
+    uint16_t lo = read(pc);
+    pc++;
+    uint16_t hi = read(pc);
+    pc++;
+
+    addr_abs = (hi << 8) | lo;
+    addr_abs += x;
+
+    // if the page has changed to a different page, 
+    // the functon need to indicate to the system that it may need
+    // an additional clock cycle. To do that is only verify if the 
+    // high byte is changed after added the X valeu to it, because if it has
+    // changed it's changed due to overflow, the carry bit from the lower byte
+    // has been carried to the high byte therefore it changed page.
+    if ( (addr_abs & 0XFF00) != (hi << 8) )
+        return 1;
+    else 
+        return 0;
+
+    return 0;
+}
+
+// <ABSOLUTE ADDRESS WITH Y REGISTER OFFSET>
+uint8_t olc6502::ABY() {
+    uint16_t lo = read(pc);
+    pc++;
+    uint16_t hi = read(pc);
+    pc++;
+
+    addr_abs = (hi << 8) | lo;
+    addr_abs += y;
+
+    if ( (addr_abs & 0XFF00) != (hi << 8) )
+        return 1;
+    else 
+        return 0;
 
     return 0;
 }
