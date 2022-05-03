@@ -172,3 +172,71 @@ uint8_t olc6502::ABY() {
 
     return 0;
 }
+
+// Indirect Addressing of the zero page 
+uint8_t olc6502::IND() {
+    uint16_t ptr_lo = read(pc);
+    pc++;
+    uint16_t ptr_hi = read(pc);
+    pc++;
+
+    uint16_t ptr = (ptr_hi << 8) | (ptr_lo);
+
+    // ---------- BUG AVOID CONTROL ---------------
+        // Simulate page boundary hardware bug
+        if (ptr_lo == 0x00FF) {
+
+            // the low byte is the original address and the high byte
+            // is the new address.
+            addr_abs = ( read(ptr & 0xFF00) << 8 ) | read(ptr + 0);
+        } 
+        else { // Behave normally 
+            
+            // the low byte is the original address and the high byte
+            // is the new address.
+            addr_abs = ( read(ptr + 1) << 8 ) | read(ptr + 0);
+        }
+
+    return 0;
+}
+
+// Indirect Addressing of the zero page with X Offset
+uint8_t olc6502::IZX() {
+    uint16_t t = read(pc);
+    pc++;
+
+    uint16_t lo = read( (uint16_t)(t + (uint16_t)x) & 0X00FF );
+    uint16_t hi = read( (uint16_t)(t + (uint16_t)x + 1) & 0X00FF );
+
+    addr_abs = (hi << 8) | lo;
+
+    return 0;
+}
+
+// Indirect Addressing of the zero page with Y Offset
+uint8_t olc6502::IZY() {
+
+    uint16_t t = read(pc);
+    pc++;
+
+    uint16_t lo = read(t & 0X00FF) ;
+    uint16_t hi = read((t +  1) & 0X00FF);
+
+    addr_abs = (hi << 8) | lo;
+    addr_abs += y;
+
+    // if the page has changed to a different page, 
+    // the functon need to indicate to the system that it may need
+    // an additional clock cycle. To do that is only verify if the 
+    // high byte is changed after added the X valeu to it, because if it has
+    // changed it's changed due to overflow, the carry bit from the lower byte
+    // has been carried to the high byte therefore it changed page.
+    if ((addr_abs & 0XFF00) != (hi << 8)) 
+        return 1;
+    else
+        return 0;
+
+    return 0;
+}
+
+
