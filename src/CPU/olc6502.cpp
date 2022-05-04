@@ -399,7 +399,7 @@ uint8_t olc6502::BVC() {
     return 0;
 } 
 
-// BRANCH IF NOT OVERFLOWED
+// BRANCH IF NOT  OVERFLOWED
 uint8_t olc6502::BVS() {
     if ( getFlag(V) == 1 ) {
 
@@ -411,6 +411,12 @@ uint8_t olc6502::BVS() {
         pc = addr_abs;
     }
 
+    return 0;
+} 
+
+// CLEAR THE CARRY BIT ( SETS A BIT IN THE STATUS REGISTER)
+uint8_t olc6502::CLC() {
+    setFlag(C, false);
     return 0;
 } 
 
