@@ -274,4 +274,144 @@ uint8_t olc6502::fetch() {
 uint8_t olc6502::AND() {
     fetch();
     a = a & fetched;
-}
+
+    /*  If the result of the logic AND resulted in all the bits being zero,
+        I set the Zero flag. */
+    setFlag(Z, a == 0X00);
+
+    /* The Negative flag will be setted if the bit seven is equal to one. */
+    setFlag(N, a & 0X80);
+    
+    // this instruction require an additional clocl cycle
+    return 1;
+} 
+
+// BRANCHING INSTRUCTION
+/*  Is the branch if the carry bit of the SR is Set Instruction.
+    So, is checked if the carry bit is equal to 1.
+*/
+uint8_t olc6502::BCS() {
+    if ( getFlag(C) == 1 ) {
+
+        /*  Branch instructions are unique*. These will directly modify the cycles variable.
+            When a branch is taken, that automatically adds 1 to the required number of cycles
+            for that instruction.
+        */
+        cycles++;
+        addr_abs = pc + addr_rel;
+
+        /*  If the branch needs to cross a page boundary, it incurs a second cycle of clock penalty.*/
+        if ( (addr_abs & 0XFF00) != (pc & 0XFF00) ) cycles++;
+
+        pc = addr_abs;
+    }
+
+    return 0;
+} 
+
+// BRANCH CARRY CLEAR
+uint8_t olc6502::BCC() {
+    if ( getFlag(C) == 0 ) {
+
+        cycles++;
+        addr_abs = pc + addr_rel;
+
+        if ( (addr_abs & 0XFF00) != (pc & 0XFF00) ) cycles++;
+
+        pc = addr_abs;
+    }
+
+    return 0;
+} 
+
+// BRANCH IF EQUAL
+uint8_t olc6502::BEQ() {
+    if ( getFlag(Z) == 1 ) {
+
+        cycles++;
+        addr_abs = pc + addr_rel;
+
+        if ( (addr_abs & 0XFF00) != (pc & 0XFF00) ) cycles++;
+
+        pc = addr_abs;
+    }
+
+    return 0;
+} 
+
+// BRANCH IF NEGATIVE
+uint8_t olc6502::BMI() {
+    if ( getFlag(N) == 1 ) {
+
+        cycles++;
+        addr_abs = pc + addr_rel;
+
+        if ( (addr_abs & 0XFF00) != (pc & 0XFF00) ) cycles++;
+
+        pc = addr_abs;
+    }
+
+    return 0;
+} 
+
+// BRANCH IF NOT EQUAL
+uint8_t olc6502::BNE() {
+    if ( getFlag(Z) == 0 ) {
+
+        cycles++;
+        addr_abs = pc + addr_rel;
+
+        if ( (addr_abs & 0XFF00) != (pc & 0XFF00) ) cycles++;
+
+        pc = addr_abs;
+    }
+
+    return 0;
+} 
+
+// BRANCH IF POSITIVE
+uint8_t olc6502::BPL() {
+    if ( getFlag(N) == 0 ) {
+
+        cycles++;
+        addr_abs = pc + addr_rel;
+
+        if ( (addr_abs & 0XFF00) != (pc & 0XFF00) ) cycles++;
+
+        pc = addr_abs;
+    }
+
+    return 0;
+} 
+
+// BRANCH IF OVERFLOWED
+uint8_t olc6502::BVC() {
+    if ( getFlag(V) == 0 ) {
+
+        cycles++;
+        addr_abs = pc + addr_rel;
+
+        if ( (addr_abs & 0XFF00) != (pc & 0XFF00) ) cycles++;
+
+        pc = addr_abs;
+    }
+
+    return 0;
+} 
+
+// BRANCH IF NOT OVERFLOWED
+uint8_t olc6502::BVS() {
+    if ( getFlag(V) == 1 ) {
+
+        cycles++;
+        addr_abs = pc + addr_rel;
+
+        if ( (addr_abs & 0XFF00) != (pc & 0XFF00) ) cycles++;
+
+        pc = addr_abs;
+    }
+
+    return 0;
+} 
+
+
