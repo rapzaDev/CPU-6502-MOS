@@ -239,4 +239,19 @@ uint8_t olc6502::IZY() {
     return 0;
 }
 
+// Relative Addressing Mode
+/*This function only applies to branching instructions.
+ Branching Instructions can't jump to anywhere in the address range,
+ they can only jump to a location. It can't jump anywhere further away
+ than 127 memory locations.
+ */
+uint8_t olc6502::REL() {
+    addr_rel = read(pc);
+    pc++;
 
+    // if the higher bit is 1, I will set thye high byte 
+    // of the relative address to all ones.
+    if (addr_rel & 0X80) addr_rel |= 0XFF00;
+
+    return 0; 
+}
