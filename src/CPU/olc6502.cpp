@@ -61,7 +61,7 @@ void olc6502::clock() {
 
 }
 
-/**set the value of SR */
+/**Set the value of SR */
 void olc6502::setFlag(FLAGS6502 f, bool v) {
     if (v) {
         status |= f;
@@ -254,4 +254,24 @@ uint8_t olc6502::REL() {
     if (addr_rel & 0X80) addr_rel |= 0XFF00;
 
     return 0; 
+}
+
+// ---------------------------------------- Instructions ----------------------------------------
+
+uint8_t olc6502::fetch() {
+    // If is equal to Implied Address Mode, don't do nothing, because
+    // in nothing to fetch.
+    if ( !(lookup[opcode].addrmode == &olc6502::IMP) ) 
+        fetched = read(addr_abs);
+
+    return fetched;
+}
+
+/*
+    The AND operation performs a logic bitwise AND between the accumulator
+    and the data that's been fetched.
+*/
+uint8_t olc6502::AND() {
+    fetch();
+    a = a & fetched;
 }
