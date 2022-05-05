@@ -420,4 +420,51 @@ uint8_t olc6502::CLC() {
     return 0;
 } 
 
+uint8_t olc6502::CLD() {
+    setFlag(D, false);
+    return 0;
+} 
+
+// ADDITION INSTRUCTION
+/*
+    Overflow logic: V = ( A ^ R )  &  ~( A ^ M )  ;
+    V: Overflow
+    A: Accumulator
+    R: Result
+    M: Data
+*/
+uint8_t olc6502::ADC() {
+    fetch();
+
+    /*  Working in a 16bit domain, allows to easily check if I need to have a carry
+        bit out, because the high byte of the 16bits will have a bit set in it.*/
+    uint16_t temp = (uint16_t)a + (uint16_t)fetched + (uint16_t)getFlag(C);
+
+    /*  Set my carry out flag*/
+    setFlag(C, temp > 255);
+
+    /*  Zero flag*/
+    setFlag(Z, (temp & 0X00FF) == 0);
+
+    /*  Negative flag*/
+    setFlag(N, temp & 0X80);
+
+    /*  Overflow flag. Since I want to look to the most significant bit of the low Byte, I apllied 
+        the 0X0080 mask.
+    */
+    setFlag(V, ( ~((uint16_t)a ^ (uint16_t)fetched) & ((uint16_t)a ^ (uint16_t)temp)) & 0X0080);
+
+    /*  Store the result back to the accumulator*/
+    a = temp & 0X00FF;
+
+    /*  It can will require an additional clock cycle*/
+    return 1;
+
+}
+
+// SUBTRACTION INSTRUCTION
+uint8_t olc6502::SBC() {
+    
+}
+
 
