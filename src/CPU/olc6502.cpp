@@ -459,12 +459,45 @@ uint8_t olc6502::ADC() {
 
     /*  It can will require an additional clock cycle*/
     return 1;
-
 }
 
 // SUBTRACTION INSTRUCTION
+/*  Subtraction Logic: A = A - M - (1- C); 
+    A: Accumulator
+    M: Data
+    (1-C): Opposite of the Carry bit
+*/
 uint8_t olc6502::SBC() {
-    
+    fetch();
+
+    /*  Bits inversion of the data. So, in order to make the operations
+        on the 16bit scope, I only want to invert only the low byte
+        with the XOR operation.
+    */
+    uint16_t value = ( (uint16_t)fetched ) ^ 0X00FF;
+
+    /*  After the inversion, is exactly the same as the addition instruction*/
+
+    uint16_t temp = (uint16_t)a + value + (uint16_t)getFlag(C);
+
+    /*  Set my carry out flag*/
+    setFlag(C, temp & 0XFF00);
+
+    /*  Zero flag*/
+    setFlag(Z, (temp & 0X00FF) == 0);
+
+    /*  Negative flag*/
+    setFlag(N, temp & 0X0080);
+
+    /*  Overflow flag. Since I want to look to the most significant bit of the low Byte, I apllied 
+        the 0X0080 mask.
+    */
+    setFlag(V, (temp ^ (uint16_t)a) & (temp ^ value) & 0X0080);
+
+    /*  Store the result back to the accumulator*/
+    a = temp & 0X00FF;  
+
+    return 1;  
 }
 
 
