@@ -1,8 +1,8 @@
-#include "./olc6502.h"
+#include "./6502.h"
 
-olc6502::olc6502() {
+CPU6502::CPU6502() {
 
-    using a = olc6502;
+    using a = CPU6502;
     
     // Populated sisxteen by sisxteen matrix:
     // { "Mnemonic", <Opcode>, <Addressing Mode>, <Clock Cycles> },
@@ -28,20 +28,20 @@ olc6502::olc6502() {
     
 }
 
-olc6502::~olc6502() {
+CPU6502::~CPU6502() {
     
 }
 
-uint8_t olc6502::read(uint16_t a) {
+uint8_t CPU6502::read(uint16_t a) {
     return bus->read(a, false);
 }
 
-void olc6502::write(uint16_t a, uint8_t d) {
+void CPU6502::write(uint16_t a, uint8_t d) {
     bus->write(a,d);
 }
 
 // Only will execute when the internal cycles variable is equal to zero.
-void olc6502::clock() {
+void CPU6502::clock() {
     if (cycles == 0) {
         opcode = read(pc);
         pc++;
@@ -62,7 +62,7 @@ void olc6502::clock() {
 }
 
 /**Set the value of SR */
-void olc6502::setFlag(FLAGS6502 f, bool v) {
+void CPU6502::setFlag(FLAGS6502 f, bool v) {
     if (v) {
         status |= f;
     } else {
@@ -73,26 +73,26 @@ void olc6502::setFlag(FLAGS6502 f, bool v) {
 // ---------------------------------------- Addressing Modes ----------------------------------------
 
 // <IMPLIED MODE>
-uint8_t olc6502::IMP() {
+uint8_t CPU6502::IMP() {
     fetched = a;
     return 0;
 }
 
 // <IMMEDIATE MODE> 
 //  THE DATA IS IN THE NEXT BYTE
-uint8_t olc6502::IMM() {
+uint8_t CPU6502::IMM() {
     addr_abs = pc++;
     return 0;
 }
 
 // <ZERO PAGE MODE>
 // THE DATA IS LOCATED SOMEWHERE IN PAGE 0.
-// The 6502 tend to have their working memory located around page zero.
+// The CPU6502 tend to have their working memory located around page zero.
 // Because this is a way of directly acessing those bytes with
 // instructions that require fewer bytes. Instructions consist of multiple bytes and each byte 
 // takes time to read, so in order to optimize the speed of the programm, it just can read in 
 // the low byte of the 0th Page.
-uint8_t olc6502::ZP0() {
+uint8_t CPU6502::ZP0() {
     addr_abs = read(pc);
     pc++;
     addr_abs &= 0X00FF; // Mask for page zero and the offset.
@@ -101,7 +101,7 @@ uint8_t olc6502::ZP0() {
 
 // <ZERO PAGE WITH X REGISTER OFFSET>
 // This is useful for iterating through regions of memory.
-uint8_t olc6502::ZPX() {
+uint8_t CPU6502::ZPX() {
     addr_abs = (read(pc) + x);
     pc++;
     addr_abs &= 0X00FF; // Mask for page zero and the offset.
@@ -110,7 +110,7 @@ uint8_t olc6502::ZPX() {
 
 // <ZERO PAGE WITH Y REGISTER OFFSET>
 // This is useful for iterating through regions of memory.
-uint8_t olc6502::ZPY() {
+uint8_t CPU6502::ZPY() {
     addr_abs = (read(pc) + y);
     pc++;
     addr_abs &= 0X00FF; // Mask for page zero and the offset.
@@ -120,7 +120,7 @@ uint8_t olc6502::ZPY() {
 // <ABSOLUTE ADDRESS>
 // Is the absolute address suplied whit the instructions will have 3 byte
 // consisted in the low byte and a high byte fo the address.
-uint8_t olc6502::ABS() {
+uint8_t CPU6502::ABS() {
     uint16_t lo = read(pc);
     pc++;
     uint16_t hi = read(pc);
@@ -132,7 +132,7 @@ uint8_t olc6502::ABS() {
 }
 
 // <ABSOLUTE ADDRESS WITH X REGISTER OFFSET>
-uint8_t olc6502::ABX() {
+uint8_t CPU6502::ABX() {
     uint16_t lo = read(pc);
     pc++;
     uint16_t hi = read(pc);
@@ -156,7 +156,7 @@ uint8_t olc6502::ABX() {
 }
 
 // <ABSOLUTE ADDRESS WITH Y REGISTER OFFSET>
-uint8_t olc6502::ABY() {
+uint8_t CPU6502::ABY() {
     uint16_t lo = read(pc);
     pc++;
     uint16_t hi = read(pc);
@@ -174,7 +174,7 @@ uint8_t olc6502::ABY() {
 }
 
 // Indirect Addressing of the zero page 
-uint8_t olc6502::IND() {
+uint8_t CPU6502::IND() {
     uint16_t ptr_lo = read(pc);
     pc++;
     uint16_t ptr_hi = read(pc);
@@ -201,7 +201,7 @@ uint8_t olc6502::IND() {
 }
 
 // Indirect Addressing of the zero page with X Offset
-uint8_t olc6502::IZX() {
+uint8_t CPU6502::IZX() {
     uint16_t t = read(pc);
     pc++;
 
@@ -214,7 +214,7 @@ uint8_t olc6502::IZX() {
 }
 
 // Indirect Addressing of the zero page with Y Offset
-uint8_t olc6502::IZY() {
+uint8_t CPU6502::IZY() {
 
     uint16_t t = read(pc);
     pc++;
@@ -245,7 +245,7 @@ uint8_t olc6502::IZY() {
  they can only jump to a location. It can't jump anywhere further away
  than 127 memory locations.
  */
-uint8_t olc6502::REL() {
+uint8_t CPU6502::REL() {
     addr_rel = read(pc);
     pc++;
 
@@ -258,10 +258,10 @@ uint8_t olc6502::REL() {
 
 // ---------------------------------------- Instructions ----------------------------------------
 
-uint8_t olc6502::fetch() {
+uint8_t CPU6502::fetch() {
     // If is equal to Implied Address Mode, don't do nothing, because
     // in nothing to fetch.
-    if ( !(lookup[opcode].addrmode == &olc6502::IMP) ) 
+    if ( !(lookup[opcode].addrmode == &CPU6502::IMP) ) 
         fetched = read(addr_abs);
 
     return fetched;
@@ -271,7 +271,7 @@ uint8_t olc6502::fetch() {
     The AND operation performs a logic bitwise AND between the accumulator
     and the data that's been fetched.
 */
-uint8_t olc6502::AND() {
+uint8_t CPU6502::AND() {
     fetch();
     a = a & fetched;
 
@@ -290,7 +290,7 @@ uint8_t olc6502::AND() {
 /*  Is the branch if the carry bit of the SR is Set Instruction.
     So, is checked if the carry bit is equal to 1.
 */
-uint8_t olc6502::BCS() {
+uint8_t CPU6502::BCS() {
     if ( getFlag(C) == 1 ) {
 
         /*  Branch instructions are unique*. These will directly modify the cycles variable.
@@ -310,7 +310,7 @@ uint8_t olc6502::BCS() {
 } 
 
 // BRANCH CARRY CLEAR
-uint8_t olc6502::BCC() {
+uint8_t CPU6502::BCC() {
     if ( getFlag(C) == 0 ) {
 
         cycles++;
@@ -325,7 +325,7 @@ uint8_t olc6502::BCC() {
 } 
 
 // BRANCH IF EQUAL
-uint8_t olc6502::BEQ() {
+uint8_t CPU6502::BEQ() {
     if ( getFlag(Z) == 1 ) {
 
         cycles++;
@@ -340,7 +340,7 @@ uint8_t olc6502::BEQ() {
 } 
 
 // BRANCH IF NEGATIVE
-uint8_t olc6502::BMI() {
+uint8_t CPU6502::BMI() {
     if ( getFlag(N) == 1 ) {
 
         cycles++;
@@ -355,7 +355,7 @@ uint8_t olc6502::BMI() {
 } 
 
 // BRANCH IF NOT EQUAL
-uint8_t olc6502::BNE() {
+uint8_t CPU6502::BNE() {
     if ( getFlag(Z) == 0 ) {
 
         cycles++;
@@ -370,7 +370,7 @@ uint8_t olc6502::BNE() {
 } 
 
 // BRANCH IF POSITIVE
-uint8_t olc6502::BPL() {
+uint8_t CPU6502::BPL() {
     if ( getFlag(N) == 0 ) {
 
         cycles++;
@@ -385,7 +385,7 @@ uint8_t olc6502::BPL() {
 } 
 
 // BRANCH IF OVERFLOWED
-uint8_t olc6502::BVC() {
+uint8_t CPU6502::BVC() {
     if ( getFlag(V) == 0 ) {
 
         cycles++;
@@ -400,7 +400,7 @@ uint8_t olc6502::BVC() {
 } 
 
 // BRANCH IF NOT  OVERFLOWED
-uint8_t olc6502::BVS() {
+uint8_t CPU6502::BVS() {
     if ( getFlag(V) == 1 ) {
 
         cycles++;
@@ -415,12 +415,12 @@ uint8_t olc6502::BVS() {
 } 
 
 // CLEAR THE CARRY BIT ( SETS A BIT IN THE STATUS REGISTER)
-uint8_t olc6502::CLC() {
+uint8_t CPU6502::CLC() {
     setFlag(C, false);
     return 0;
 } 
 
-uint8_t olc6502::CLD() {
+uint8_t CPU6502::CLD() {
     setFlag(D, false);
     return 0;
 } 
@@ -433,7 +433,7 @@ uint8_t olc6502::CLD() {
     R: Result
     M: Data
 */
-uint8_t olc6502::ADC() {
+uint8_t CPU6502::ADC() {
     fetch();
 
     /*  Working in a 16bit domain, allows to easily check if I need to have a carry
@@ -467,17 +467,18 @@ uint8_t olc6502::ADC() {
     M: Data
     (1-C): Opposite of the Carry bit
 */
-uint8_t olc6502::SBC() {
+uint8_t CPU6502::SBC() {
     fetch();
 
     /*  Bits inversion of the data. So, in order to make the operations
         on the 16bit scope, I only want to invert only the low byte
-        with the XOR operation.
+        with the XOR operation. When the bits of the fetched variable 
+        were inverted, the logic for the substractions is the same to
+        addition instruction.
     */
     uint16_t value = ( (uint16_t)fetched ) ^ 0X00FF;
 
     /*  After the inversion, is exactly the same as the addition instruction*/
-
     uint16_t temp = (uint16_t)a + value + (uint16_t)getFlag(C);
 
     /*  Set my carry out flag*/
@@ -500,4 +501,31 @@ uint8_t olc6502::SBC() {
     return 1;  
 }
 
+/*  Pushes the accumulator to the Stack.*/
+// PUSH ACCUMULATOR
+uint8_t CPU6502::PHA() {
+    /*  The 6502 has hard-coded into it a base location for the Stack Pointer, and the Stack pointer 
+        is an offset to that location. So there is a region on memory that is expected to be used 
+        for the Stack by this processor.*/
+    write(0X0100 + stkp, a);
+    stkp--;
+    return 0;
+}
+
+// POP ACCUMULATOR
+uint8_t CPU6502::PLA() {
+    stkp++;
+    a = read(0X0100 + stkp);
+    
+    setFlag(Z, a == 0X00);
+    setFlag(N, a & 0X80);
+
+    return 0;
+}
+
+
+// RESET INSTRUCTION
+void CPU6502::reset() {
+
+}
 

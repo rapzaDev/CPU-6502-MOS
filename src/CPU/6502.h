@@ -5,11 +5,11 @@
 
 class Bus;
 
-class olc6502 {   
+class 6502 {   
 
 public:
-    olc6502();
-    ~olc6502();
+    6502();
+    ~6502();
 
     void ConnectBus(Bus *n) {
         bus = n;
@@ -101,9 +101,9 @@ private:
         // mnemonic
         std::string name;
         // function pointer to the opcode
-        uint8_t (olc6502::*operate)(void) = nullptr;
+        uint8_t (6502::*operate)(void) = nullptr;
         // function pointer to the adress mode
-        uint8_t (olc6502::*addrmode)(void) = nullptr;
+        uint8_t (6502::*addrmode)(void) = nullptr;
         // count of the number cycles the instruction requires to execute
         uint8_t cycles = 0;
     };
