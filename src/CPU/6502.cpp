@@ -524,8 +524,43 @@ uint8_t CPU6502::PLA() {
 }
 
 
+/*  When reset() is called it configures the CPU into
+    a known state.
+*/
 // RESET INSTRUCTION
 void CPU6502::reset() {
+    a = 0;
+    x = 0;
+    y = 0;
+    stkp = 0XFD;
+    status = 0X00 | U;
 
+    /*  When the reset instruction is called in the 6502
+        it looks directly to location FFFC to read the 16-bit 
+        address. The data in this location can be set by the programmer when they're
+        compiling their programs. So the 6502 knows that in the event of a reset
+        it should look always to this addres FFFC to get the address to set its program counter.
+
+    */
+        addr_abs = 0XFFFC;
+        uint16_t lo = read(addr_abs + 0);
+        uint16_t hi = read(addr_abs + 1);
+
+        pc = (hi << 8) | lo;
+    /*-------------------------------------------------------------------------------------------*/
+
+    /*  Adding a reset of internal variables to zero.
+        Just for best practices.
+    */
+        addr_rel = 0X0000;
+        addr_abs = 0X0000;
+        fetched = 0X00;
+    /*----------------------------------------------*/
+
+    /*  Interrupts and Resets take time. So the cycles value will be 
+        hard-coded
+    */
+        cycles = 8;
+    /*---------------------------------------------------------------*/
 }
 
