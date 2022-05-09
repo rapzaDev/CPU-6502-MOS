@@ -627,3 +627,23 @@ void CPU6502::nmi() {
     cycles = 8;
 }
 
+/*  Will restore the state of the processor to how it was before the interrupt occurred*/
+//  RESTORE INSTRUCTION
+uint8_t CPU6502::RTI() {
+    /*  Reading the status register from the stack*/
+        stkp++;
+        status = read(0X0100 + stkp);
+        status &= ~B;
+        status &= ~U;
+    /**********************************************/
+
+    stkp++;
+    // Reading the previous program counter from the stack
+    pc = (uint16_t)read(0X0100 + stkp);
+    stkp++;
+    // Setting the program counter
+    pc |= (uint16_t)read(0X0100 + stkp) << 8;
+
+    return 0;
+}
+
