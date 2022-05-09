@@ -5,11 +5,11 @@
 
 class Bus;
 
-class 6502 {   
+class CPU6502 {   
 
 public:
-    6502();
-    ~6502();
+    CPU6502();
+    ~CPU6502();
 
     void ConnectBus(Bus *n) {
         bus = n;
@@ -77,7 +77,7 @@ public:
     // So this variable will store that location.
         uint16_t addr_abs = 0x0000;
 
-    // On the 6502 branch instructions can only jump a certain distance from the location where 
+    // On the CPU6502 branch instructions can only jump a certain distance from the location where 
     // the instructions is called, so they jump to a relative address.
     // This variable will store this relative address
         uint16_t addr_rel = 0x0000;
@@ -101,9 +101,9 @@ private:
         // mnemonic
         std::string name;
         // function pointer to the opcode
-        uint8_t (6502::*operate)(void) = nullptr;
+        uint8_t (CPU6502::*operate)(void) = nullptr;
         // function pointer to the adress mode
-        uint8_t (6502::*addrmode)(void) = nullptr;
+        uint8_t (CPU6502::*addrmode)(void) = nullptr;
         // count of the number cycles the instruction requires to execute
         uint8_t cycles = 0;
     };

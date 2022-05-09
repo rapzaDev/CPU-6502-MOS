@@ -564,3 +564,44 @@ void CPU6502::reset() {
     /*---------------------------------------------------------------*/
 }
 
+/***************************************************************************************************************************/
+/***************************************************************************************************************************/
+/***************************************************************************************************************************/
+
+/*  Interrupts don't reset the program, instead what the program
+    need to do is run a certain piece of code to service
+    the interrupt. So when an interrupt occurs it starts to write some data 
+    to the stack. The first thing it writes its the current program counter.
+*/
+
+//  INTERRUPT REQUEST INSTRUCTION
+void CPU6502::irq() {
+
+    // pc takes 2 rights because its 16-bits
+    if ( getFlag(I) == 0 ) {
+        //  Hi byte
+        write(0X0100 + stkp, (pc >> 8) & 0x00FF);
+        stkp--;
+        //  Low byte
+        write(0X0100 + stkp, pc & 0X00FF);
+        stkp--;
+
+        setFlag(B, 0);
+        setFlag(U, 1);
+        setFlag(I,1);
+        write(0X0100 + stkp, status);
+        stkp--;
+
+        /*  Similar as the Reset instruction, it have a pre-set location to get the
+            value of the new program counter.
+        */
+            addr_abs = 0XFFFE;
+            uint16_t lo = read(addr_abs + 0);
+            uint16_t hi = read(addr_abs + 1);
+            pc = (hi << 8) | lo;
+
+            cycles = 7;
+        /***************************************************************************/
+    }
+}
+
