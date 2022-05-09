@@ -605,3 +605,25 @@ void CPU6502::irq() {
     }
 }
 
+//  NON-MASKABLE INTERRUPT INSTRUCTION
+void CPU6502::nmi() {
+    write(0X0100 + stkp, (pc >> 8) & 0x00FF);
+    stkp--;
+    write(0X0100 + stkp, pc & 0X00FF);
+    stkp--;
+
+    setFlag(B, 0);
+    setFlag(U, 1);
+    setFlag(I,1);
+    write(0X0100 + stkp, status);
+    stkp--;
+
+    /*  Specific address to nmi*/
+    addr_abs = 0XFFFA;
+    uint16_t lo = read(addr_abs + 0);
+    uint16_t hi = read(addr_abs + 1);
+    pc = (hi << 8) | lo;
+
+    cycles = 8;
+}
+
